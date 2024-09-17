@@ -1,15 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import * as process from 'process';
 
 async function bootstrap() {
+  console.log(process.env.KAFKA_ENDPOINT);
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.RMQ,
+    transport: Transport.KAFKA,
     options: {
-      urls: ['amqp://rmuser:rmpassword@localhost:5672'],
-      queue: 'cats_queue',
+      client: {
+        brokers: [process.env.KAFKA_ENDPOINT],
+      },
     },
   });
+
   await app.listen();
 }
 

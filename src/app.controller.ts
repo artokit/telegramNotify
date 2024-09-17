@@ -1,19 +1,32 @@
-import { Controller, Inject } from '@nestjs/common';
-import { ClientProxy, EventPattern, MessagePattern } from '@nestjs/microservices';
+import { Controller } from "@nestjs/common";
+import {
+  MessagePattern,
+  Ctx,
+  Transport, Payload, KafkaContext,
+} from '@nestjs/microservices';
+import { NotifyEventDto } from './dto/notify-event-dto';
+import { TelegramService } from './telegram/telegram.service';
 
 @Controller()
 export class AppController {
-  constructor(@Inject('MATH_SERVICE') private client: ClientProxy){}
+  constructor(
+    private telegrafService: TelegramService
+  ) {}
 
-  @EventPattern(undefined)
-  async handleBookCreatedEvent(data: Record<string, unknown>) {
-    const message = await this.client.send({cmd: "hui"}, 'Progressive Coder');
-    console.log(message);
-    console.log(data);
+  @MessagePattern("notifications.telegram.event-soon", Transport.KAFKA)
+  async eventSoon(@Payload() data: string, @Ctx() context: KafkaContext) {
+    console.log("test");
   }
 
-  @MessagePattern({cmd: 'greeting-async'})
-  async hui(data: Record<any, any>) {
-    console.log("svo");
+  @MessagePattern("notifications.telegram.all", Transport.KAFKA)
+  async notifyAboutEvent(@Payload() data: NotifyEventDto, @Ctx() context: KafkaContext) {
+    try {
+      if (data.eventId) {
+        await this.telegrafService.sendAllUsersByEventId(data.eventId);
+      }
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 }

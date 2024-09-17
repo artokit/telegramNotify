@@ -1,23 +1,20 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Ctx, MessagePattern, Payload, RmqContext, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { TelegramModule } from './telegram/telegram.module';
+
 
 @Module({
   controllers: [AppController],
   imports: [
-    ClientsModule.register([
+    TelegramModule,
+    PrismaModule,
+    ConfigModule.forRoot(
       {
-        name: 'MATH_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost:5672'],
-          queue: 'cats_queue',
-          queueOptions: {
-            durable: false
-          },
-        },
-      },
-    ]),
+        envFilePath: `.env`
+      }
+    ),
   ]
 })
 export class AppModule {}
